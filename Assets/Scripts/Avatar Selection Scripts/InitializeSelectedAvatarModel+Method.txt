@@ -1,0 +1,19 @@
+[PunRPC]
+    public void InitializeSelectedAvatarModel(int avatarSelectionNumber)
+    {
+        GameObject selectedAvatarGameobject = Instantiate(AvatarModelPrefabs[avatarSelectionNumber],LocalXRRigGameobject.transform);
+
+        AvatarInputConverter avatarInputConverter = transform.GetComponent<AvatarInputConverter>();
+        AvatarHolder avatarHolder = selectedAvatarGameobject.GetComponent<AvatarHolder>();
+        SetUpAvatarGameobject(avatarHolder.HeadTransform,avatarInputConverter.AvatarHead);
+        SetUpAvatarGameobject(avatarHolder.BodyTransform,avatarInputConverter.AvatarBody);
+        SetUpAvatarGameobject(avatarHolder.HandLeftTransform, avatarInputConverter.AvatarHand_Left);
+        SetUpAvatarGameobject(avatarHolder.HandRightTransform, avatarInputConverter.AvatarHand_Right);
+    }
+
+    void SetUpAvatarGameobject(Transform avatarModelTransform, Transform mainAvatarTransform)
+    {
+        avatarModelTransform.SetParent(mainAvatarTransform);
+        avatarModelTransform.localPosition = Vector3.zero;
+        avatarModelTransform.localRotation = Quaternion.identity;
+    }
