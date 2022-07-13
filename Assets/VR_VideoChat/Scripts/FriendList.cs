@@ -28,6 +28,11 @@ public class FriendList : UserList
         CheckFriendsStatus();
     }
 
+    public override void OnPlayerLeftRoom(Player otherPlayer)
+    {
+        CheckFriendsStatus();
+    }
+
     //public override void OnFriendListUpdate(List<FriendInfo> friendList)
     //{
     //    for (int i = 0; i < friendList.Count; i++)
@@ -62,6 +67,7 @@ public class FriendList : UserList
                 break;
             }
         }
+        usersToggleGroup.SetAllTogglesOff();
     }
 
     public void FillList()

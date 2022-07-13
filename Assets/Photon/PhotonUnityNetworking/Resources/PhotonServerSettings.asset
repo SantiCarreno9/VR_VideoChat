@@ -46,6 +46,11 @@ MonoBehaviour:
   - StartNetworkGrabbing
   - StopNetworkGrabbing
   - CallFriendRPC
+  - DeclineCallRPC
+  - CancelCallRequestRPC
+  - ShowCallRequestRPC
+  - AcceptCallRPC
+  - HangUpRPC
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1

@@ -23,6 +23,7 @@ public class SpawnManager : MonoBehaviour
                 playerAvatar.GetComponent<PlayerNetworkSetup>().LocalXRRig = localXRRig;
                 localXRRig.GetComponent<AvatarInputConverter>().MainAvatarTransform = playerAvatar.transform;
                 friendList.userVideoChat = playerAvatar.GetComponent<UserVideoChat>();
+                VideoChatUIManager.Instance.userVideoChat = playerAvatar.GetComponent<UserVideoChat>();
             }
         }
     }
