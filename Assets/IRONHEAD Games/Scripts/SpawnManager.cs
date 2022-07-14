@@ -9,7 +9,6 @@ public class SpawnManager : MonoBehaviour
     GameObject GenericVRPlayerPrefab;
 
     public GameObject localXRRig;
-    public FriendList friendList;
 
     public Vector3 spawnPosition;
     // Start is called before the first frame update
@@ -17,14 +16,11 @@ public class SpawnManager : MonoBehaviour
     {
         if (PhotonNetwork.IsConnectedAndReady)
         {
+            Debug.Log("Instantiating players");
             GameObject playerAvatar = PhotonNetwork.Instantiate(GenericVRPlayerPrefab.name, spawnPosition, Quaternion.identity);
-            if (PhotonNetwork.LocalPlayer.IsLocal)
-            {
-                playerAvatar.GetComponent<PlayerNetworkSetup>().LocalXRRig = localXRRig;
-                localXRRig.GetComponent<AvatarInputConverter>().MainAvatarTransform = playerAvatar.transform;
-                friendList.userVideoChat = playerAvatar.GetComponent<UserVideoChat>();
-                VideoChatUIManager.Instance.userVideoChat = playerAvatar.GetComponent<UserVideoChat>();
-            }
+            playerAvatar.GetComponent<PlayerNetworkSetup>().LocalXRRig = localXRRig;
+            localXRRig.GetComponent<AvatarInputConverter>().MainAvatarTransform = playerAvatar.transform;
+
         }
     }
 

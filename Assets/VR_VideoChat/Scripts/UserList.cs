@@ -8,6 +8,7 @@ using Photon.Realtime;
 
 public class UserList : MonoBehaviourPunCallbacks
 {
+    [Header("UserList")]
     public GameObject userButtonPrefab;
     public GameObject scrollViewCont;
     public ToggleGroup usersToggleGroup;

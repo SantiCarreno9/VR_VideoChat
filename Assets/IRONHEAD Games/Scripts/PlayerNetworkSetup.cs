@@ -11,26 +11,27 @@ public class PlayerNetworkSetup : MonoBehaviourPunCallbacks
     public GameObject MainAvatarGameobject;
     public GameObject AvatarHead;
     public GameObject AvatarBody;
+    public GameObject AvatarHand_Left;
+    public GameObject AvatarHand_Right;
 
     public GameObject[] AvatarModelPrefabs;
 
     public TextMeshProUGUI PlayerName_Text;
     public int avatarNumber = 0;
+    //public Camera videoChatCamera;
     // Start is called before the first frame update
     void Start()
     {
         if (photonView.IsMine)
         {
-            //The player is local
-            //LocalXRRig.SetActive(true);
-
-            //Getting the avatar selection data so that the correct avatar model can be Instantiated.
-            //object avatarSelectionNumber = avatarNumber;
-            //if (PhotonNetwork.LocalPlayer.CustomProperties.TryGetValue(MultiplayerVRConstants.AVATAR_SELECTION_NUMBER, out avatarSelectionNumber))
-            //{
-            //    Debug.Log("Avatar selection number: " + (int)avatarSelectionNumber);
-            //    photonView.RPC("InitializeSelectedAvatarModel", RpcTarget.AllBuffered, (int)avatarSelectionNumber);
-            //}
+            //FindObjectOfType<VideoChatManager>().AddUser(photonView.Owner.UserId, MainAvatarGameobject.transform, true);
+            AvatarInputConverter avatarInputConverter = LocalXRRig.GetComponent<AvatarInputConverter>();
+            avatarInputConverter.AvatarHead = AvatarHead.transform;
+            avatarInputConverter.AvatarBody = AvatarBody.transform;
+            avatarInputConverter.AvatarHand_Left = AvatarHand_Left.transform;
+            avatarInputConverter.AvatarHand_Right = AvatarHand_Right.transform;
+            avatarInputConverter.MainAvatarTransform = MainAvatarGameobject.transform;
+            avatarNumber = Random.Range(0, AvatarModelPrefabs.Length);
             photonView.RPC("InitializeSelectedAvatarModel", RpcTarget.AllBuffered, avatarNumber);
             SetLayerRecursively(AvatarHead, 6);
             SetLayerRecursively(AvatarBody, 7);
@@ -38,7 +39,6 @@ public class PlayerNetworkSetup : MonoBehaviourPunCallbacks
             TeleportationArea[] teleportationAreas = GameObject.FindObjectsOfType<TeleportationArea>();
             if (teleportationAreas.Length > 0)
             {
-                Debug.Log("Found " + teleportationAreas.Length + " teleportation areas");
                 foreach (var item in teleportationAreas)
                 {
                     item.teleportationProvider = LocalXRRig.GetComponent<TeleportationProvider>();
@@ -51,6 +51,8 @@ public class PlayerNetworkSetup : MonoBehaviourPunCallbacks
             //The player is remote            
             SetLayerRecursively(AvatarHead, 0);
             SetLayerRecursively(AvatarBody, 0);
+
+            FindObjectOfType<VideoChatManager>().AddUser(photonView.Owner.UserId, AvatarBody.transform);
         }
 
         if (PlayerName_Text != null)
@@ -71,23 +73,18 @@ public class PlayerNetworkSetup : MonoBehaviourPunCallbacks
     [PunRPC]
     public void InitializeSelectedAvatarModel(int avatarSelectionNumber)
     {
-        GameObject selectedAvatarGameobject = Instantiate(AvatarModelPrefabs[avatarSelectionNumber]);
+        GameObject instantiatedAvatarGameobject = Instantiate(AvatarModelPrefabs[avatarSelectionNumber], MainAvatarGameobject.transform);
+        AvatarHolder avatarHolder = instantiatedAvatarGameobject.GetComponent<AvatarHolder>();
+        SetUpAvatarGameobject(avatarHolder.HeadTransform, AvatarHead.transform);
+        SetUpAvatarGameobject(avatarHolder.BodyTransform, AvatarBody.transform);
+        SetUpAvatarGameobject(avatarHolder.HandLeftTransform, AvatarHand_Left.transform);
+        SetUpAvatarGameobject(avatarHolder.HandRightTransform, AvatarHand_Right.transform);
         if (photonView.IsMine)
         {
-            selectedAvatarGameobject.transform.SetParent(LocalXRRig.transform);
-            AvatarInputConverter avatarInputConverter = LocalXRRig.GetComponent<AvatarInputConverter>();
-            AvatarHolder avatarHolder = selectedAvatarGameobject.GetComponent<AvatarHolder>();
-            avatarInputConverter.AvatarHead = avatarHolder.HeadTransform;
-            avatarInputConverter.AvatarBody = avatarHolder.BodyTransform;
-            avatarInputConverter.AvatarHand_Left = avatarHolder.HandLeftTransform;
-            avatarInputConverter.AvatarHand_Right = avatarHolder.HandRightTransform;
-            SetUpAvatarGameobject(avatarHolder.HeadTransform, avatarInputConverter.AvatarHead);
-            SetUpAvatarGameobject(avatarHolder.BodyTransform, avatarInputConverter.AvatarBody);
-            SetUpAvatarGameobject(avatarHolder.HandLeftTransform, avatarInputConverter.AvatarHand_Left);
-            SetUpAvatarGameobject(avatarHolder.HandRightTransform, avatarInputConverter.AvatarHand_Right);
-            avatarInputConverter.enabled = true;
+            instantiatedAvatarGameobject.transform.SetParent(LocalXRRig.transform);
+            LocalXRRig.GetComponent<AvatarInputConverter>().enabled = true;
         }
-        //GameObject selectedAvatarGameobject = Instantiate(AvatarModelPrefabs[avatarSelectionNumber], LocalXRRig.transform);        
+        //GameObject instantiatedAvatarGameobject = Instantiate(AvatarModelPrefabs[avatarSelectionNumber], LocalXRRig.transform);        
     }
 
     void SetUpAvatarGameobject(Transform avatarModelTransform, Transform mainAvatarTransform)

@@ -10,21 +10,7 @@ public class LoginManager : MonoBehaviourPunCallbacks
     public TMP_InputField PlayerName_InputName;
 
     private const string NICKNAME_KEY = "NICKNAME_KEY";
-    private UserInfoManager userInfoManager = new UserInfoManager();
 
-    #region Unity Methods
-
-    void Start()
-    {
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
-
-    #endregion
 
     #region UI Callback Methods
 
@@ -47,7 +33,7 @@ public class LoginManager : MonoBehaviourPunCallbacks
         string playerNickname;
         playerNickname = "User" + Random.Range(0, 10000);
         string userID = Random.Range(0, 10000).ToString();
-        if (userInfoManager.GetLocalUserInfo(out UserInfo localuserInfo))
+        if (UserInfoManager.Instance.GetLocalUserInfo(out UserInfo localuserInfo))
         {
             playerNickname = localuserInfo.localPlayer.userName;
             userID = localuserInfo.localPlayer.userId;
@@ -60,7 +46,7 @@ public class LoginManager : MonoBehaviourPunCallbacks
             userInfo.localPlayer.userId = userID;
             userInfo.friendList = new List<User>();
             Debug.Log(userInfo.localPlayer.userName);
-            userInfoManager.SaveLocalUserInfo(userInfo);
+            UserInfoManager.Instance.SaveLocalUserInfo(userInfo);
         }
         PhotonNetwork.NickName = playerNickname;
         Debug.Log(PhotonNetwork.NickName);
@@ -84,7 +70,6 @@ public class LoginManager : MonoBehaviourPunCallbacks
         Debug.Log("Connected to Master Server with player name: " + PhotonNetwork.NickName);
         PhotonNetwork.AutomaticallySyncScene = true;
         PhotonNetwork.JoinRandomRoom();
-        //PhotonNetwork.LoadLevel("HomeScene");
     }
 
     public override void OnJoinedRoom()

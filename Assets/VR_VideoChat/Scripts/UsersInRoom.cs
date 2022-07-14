@@ -8,15 +8,68 @@ using TMPro;
 
 public class UsersInRoom : UserList
 {
-    public FriendList friendList;
+    public static UsersInRoom Instance;
+    public SocialInteractionManager socialInteractionManager;
     private List<User> usersInRoom = new List<User>();
 
+    [Header("Friend Request UI")]
+    [SerializeField]
+    private GameObject friendRequestUI;
+    [SerializeField]
+    private TextMeshProUGUI friendRequestText;
 
-
-    public void AddFriend()
+    private void Awake()
     {
-        friendList.AddFriend(GetActiveToggleUser());
+        if (Instance != null && Instance != this)
+        {
+            Destroy(this.gameObject);
+            return;
+        }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
     }
+
+    #region Friend Request
+
+    public void SendFriendRequest()
+    {
+        User targetUser = GetActiveToggleUser();
+
+        for (int j = 0; j < PhotonNetwork.PlayerList.Length; j++)
+        {
+            if (targetUser.userId.Equals(PhotonNetwork.PlayerList[j].UserId, System.StringComparison.OrdinalIgnoreCase))
+            {
+                socialInteractionManager.SendFriendRequest(PhotonNetwork.PlayerList[j]);
+                break;
+            }
+        }
+        usersToggleGroup.SetAllTogglesOff();
+    }
+
+    public void OpenFriendRequestUI(string otherName)
+    {
+        friendRequestUI.SetActive(true);
+        friendRequestText.text = otherName + " wants to be your friend";
+    }
+
+    public void CloseFriendRequestUI()
+    {
+        friendRequestUI.SetActive(false);
+        friendRequestText.text = null;
+    }
+
+    public void AcceptFriendRequest()
+    {
+        socialInteractionManager.AcceptFriendRequest();
+        CloseFriendRequestUI();
+    }
+
+    public void DeclineFriendRequest()
+    {
+        CloseFriendRequestUI();
+    }
+
+    #endregion
 
     public void FillList()
     {
@@ -70,7 +123,7 @@ public class UsersInRoom : UserList
         var activeToggle = usersToggleGroup.GetFirstActiveToggle();
         User user = new User();
         user.userName = activeToggle.name;
-        if (!friendList.userInfoManager.CheckIfItIsAlreadyAFriend(user))
+        if (!UserInfoManager.Instance.CheckIfItIsAlreadyAFriend(user))
         {
             listButtonsCont.SetActive(true);
         }

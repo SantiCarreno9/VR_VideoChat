@@ -3,24 +3,38 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
-public class UserInfoManager// : MonoBehaviour
+public class UserInfoManager : MonoBehaviour
 {
-    private string userInfoPath = Directory.GetCurrentDirectory() + @"/GameData" + "/" + "userData.json";
-    //private string userInfoPath = Application.streamingAssetsPath + "/" + "userData.json";
+    public static UserInfoManager Instance;
+    private string infoPath;
+    //private string infoPath = Directory.GetCurrentDirectory() + @"/GameData" + "/";
+    //private string infoPath = Application.streamingAssetsPath + "/";
+    private string userInfoPath;
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(this.gameObject);
+            return;
+        }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
 
     // Start is called before the first frame update
     void Start()
     {
-        //if (!Directory.Exists(userInfoPath))
-        //{
-        //    Directory.CreateDirectory(userInfoPath);
-        //}
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
+#if !UNITY_EDITOR
+        infoPath = Application.persistentDataPath + @"/GameData" + "/";
+#else
+        infoPath = Directory.GetCurrentDirectory() + @"/GameData" + "/";
+#endif
+        userInfoPath = infoPath + "userData.json";
+        if (!Directory.Exists(infoPath))
+        {
+            Directory.CreateDirectory(infoPath);
+        }
     }
 
     public bool GetLocalUserInfo(out UserInfo userInfo)
@@ -51,8 +65,11 @@ public class UserInfoManager// : MonoBehaviour
             if (userInfo.friendList == null)
                 userInfo.friendList = new List<User>();
 
-            userInfo.friendList.Add(friend);
-            SaveLocalUserInfo(userInfo);
+            if (!CheckIfItIsAlreadyAFriend(friend))
+            {
+                userInfo.friendList.Add(friend);
+                SaveLocalUserInfo(userInfo);
+            }
         }
     }
 

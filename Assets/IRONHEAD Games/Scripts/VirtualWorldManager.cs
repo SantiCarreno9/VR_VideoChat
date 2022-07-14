@@ -38,7 +38,7 @@ public class VirtualWorldManager : MonoBehaviourPunCallbacks
 
     public override void OnDisconnected(DisconnectCause cause)
     {
-        PhotonNetwork.LoadLevel("HomeScene");
+        PhotonNetwork.LoadLevel("LoginScene");
     }
 
     #endregion

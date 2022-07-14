@@ -1631,6 +1631,7 @@ MonoBehaviour:
   scrollViewCont: {fileID: 1003200228913580761}
   usersToggleGroup: {fileID: 2207353220016796609}
   listButtonsCont: {fileID: 664472869649267738}
+  userVideoChat: {fileID: 0}
 --- !u!1 &2616588373561817410
 GameObject:
   m_ObjectHideFlags: 0
@@ -5472,6 +5473,8 @@ MonoBehaviour:
   MainAvatarGameobject: {fileID: 5600065768744626700}
   AvatarHead: {fileID: 6773338316853603631}
   AvatarBody: {fileID: 7527249625681180978}
+  AvatarHand_Left: {fileID: 1122300762027896730}
+  AvatarHand_Right: {fileID: 3824504979868141812}
   AvatarModelPrefabs:
   - {fileID: 6698639957168452362, guid: 69edaa7f6d0367845b76420b47e4be35, type: 3}
   - {fileID: 1974154923505330770, guid: 0c74eca2d21234b42b00d95293f1ee7e, type: 3}
@@ -5479,6 +5482,7 @@ MonoBehaviour:
   - {fileID: 5701194048334369547, guid: 47133d67b3a40f04eb97e5089982ea39, type: 3}
   - {fileID: 3653637840890810929, guid: 089d38c2beff1f044b446797593d7269, type: 3}
   PlayerName_Text: {fileID: 719852263836751778}
+  avatarNumber: 0
 --- !u!114 &9127285956447483393
 MonoBehaviour:
   m_ObjectHideFlags: 0

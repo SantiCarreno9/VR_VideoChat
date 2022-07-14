@@ -6,8 +6,7 @@ using TMPro;
 public class VideoChatUIManager : MonoBehaviour
 {
     public static VideoChatUIManager Instance;
-    [HideInInspector]
-    public UserVideoChat userVideoChat;
+    public VideoChatManager videoChatManager;
 
     public GameObject videoChatUI;
 
@@ -90,45 +89,44 @@ public class VideoChatUIManager : MonoBehaviour
         videoChatUI.SetActive(true);
         inCallUI.SetActive(true);
         receiverNameText.text = otherName;
-        localPlayerCamera.SetActive(true);
-        otherPlayerCamera.SetActive(true);
+        //localPlayerCamera.SetActive(true);
+        //otherPlayerCamera.SetActive(true);
     }
 
     public void CloseInCallUI()
     {
         inCallUI.SetActive(false);
         receiverNameText.text = otherName;
-        localPlayerCamera.SetActive(false);
-        otherPlayerCamera.SetActive(false);
+        //localPlayerCamera.SetActive(false);
+        //otherPlayerCamera.SetActive(false);
     }
 
     #endregion
 
     public void AnswerCall()
     {
-        userVideoChat.AcceptCall();
+        videoChatManager.AcceptCall();
         CloseReceiverCallRequest();
-        CloseCallerCallRequest();
         OpenInCallUI();
     }
 
     public void DeclineCall()
     {
-        userVideoChat.DeclineCall();
+        videoChatManager.DeclineCall();
         CloseReceiverCallRequest();
         CloseVideoChatUI();
     }
 
     public void CancelCall()
     {
-        userVideoChat.DeclineCall();
+        videoChatManager.CancelCallRequest();
         CloseCallerCallRequest();
         CloseVideoChatUI();
     }
 
     public void HangUp()
     {
-        userVideoChat.HangUp();
+        videoChatManager.HangUp();
         CloseInCallUI();
         CloseVideoChatUI();
     }
