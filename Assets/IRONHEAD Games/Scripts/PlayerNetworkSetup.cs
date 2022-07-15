@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
-using UnityEngine.XR.Interaction.Toolkit;
+using Photon.Realtime;
 using TMPro;
 
 public class PlayerNetworkSetup : MonoBehaviourPunCallbacks
@@ -18,33 +18,32 @@ public class PlayerNetworkSetup : MonoBehaviourPunCallbacks
 
     public TextMeshProUGUI PlayerName_Text;
     public int avatarNumber = 0;
+
+    public AudioSource speaker;
     //public Camera videoChatCamera;
     // Start is called before the first frame update
     void Start()
     {
         if (photonView.IsMine)
         {
-            //FindObjectOfType<VideoChatManager>().AddUser(photonView.Owner.UserId, MainAvatarGameobject.transform, true);
+            #region SetXRRig targets
             AvatarInputConverter avatarInputConverter = LocalXRRig.GetComponent<AvatarInputConverter>();
             avatarInputConverter.AvatarHead = AvatarHead.transform;
             avatarInputConverter.AvatarBody = AvatarBody.transform;
             avatarInputConverter.AvatarHand_Left = AvatarHand_Left.transform;
             avatarInputConverter.AvatarHand_Right = AvatarHand_Right.transform;
             avatarInputConverter.MainAvatarTransform = MainAvatarGameobject.transform;
+            #endregion
+
+            #region Avatar Configuration
             avatarNumber = Random.Range(0, AvatarModelPrefabs.Length);
             photonView.RPC("InitializeSelectedAvatarModel", RpcTarget.AllBuffered, avatarNumber);
             SetLayerRecursively(AvatarHead, 6);
             SetLayerRecursively(AvatarBody, 7);
-
-            TeleportationArea[] teleportationAreas = GameObject.FindObjectsOfType<TeleportationArea>();
-            if (teleportationAreas.Length > 0)
-            {
-                foreach (var item in teleportationAreas)
-                {
-                    item.teleportationProvider = LocalXRRig.GetComponent<TeleportationProvider>();
-                }
-            }
             MainAvatarGameobject.AddComponent<AudioListener>();
+            #endregion            
+
+            FindObjectOfType<VideoChatManager>().localPlayer = this;
         }
         else
         {
@@ -81,7 +80,7 @@ public class PlayerNetworkSetup : MonoBehaviourPunCallbacks
         SetUpAvatarGameobject(avatarHolder.HandRightTransform, AvatarHand_Right.transform);
         if (photonView.IsMine)
         {
-            instantiatedAvatarGameobject.transform.SetParent(LocalXRRig.transform);
+            //instantiatedAvatarGameobject.transform.SetParent(LocalXRRig.transform);
             LocalXRRig.GetComponent<AvatarInputConverter>().enabled = true;
         }
         //GameObject instantiatedAvatarGameobject = Instantiate(AvatarModelPrefabs[avatarSelectionNumber], LocalXRRig.transform);        
@@ -92,5 +91,21 @@ public class PlayerNetworkSetup : MonoBehaviourPunCallbacks
         avatarModelTransform.SetParent(mainAvatarTransform);
         avatarModelTransform.localPosition = Vector3.zero;
         avatarModelTransform.localRotation = Quaternion.identity;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="value"> 0:2D  1:3D</param>
+    public void ChangeSpatialBlend(int value, Player target)
+    {
+        photonView.RPC("ChangeSpatialBlendRPC", target, value);
+        speaker.spatialBlend = value;
+    }
+
+    [PunRPC]
+    public void ChangeSpatialBlendRPC(int value)
+    {
+        speaker.spatialBlend = value;
     }
 }

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 public class VideoChatUIManager : MonoBehaviour
@@ -21,7 +22,11 @@ public class VideoChatUIManager : MonoBehaviour
     public TextMeshProUGUI otherNameText;
     public GameObject localPlayerCamera;
     public GameObject otherPlayerCamera;
+    public Image microphoneImage;
+    public Sprite microphoneNormalIcon;
+    public Sprite microphoneClosedIcon;
 
+    private bool microphoneState = true;
     private string otherName;
 
     private void Awake()
@@ -129,5 +134,15 @@ public class VideoChatUIManager : MonoBehaviour
         videoChatManager.HangUp();
         CloseInCallUI();
         CloseVideoChatUI();
+    }
+
+    public void ChangeMicrophoneState()
+    {
+        if (!microphoneState)
+            microphoneImage.sprite = microphoneNormalIcon;
+        else microphoneImage.sprite = microphoneClosedIcon;
+
+        microphoneState = !microphoneState;
+        videoChatManager.ChangeMicrophoneState(microphoneState);
     }
 }

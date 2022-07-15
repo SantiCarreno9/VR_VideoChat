@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
+using Photon.Voice.Unity;
+using Photon.Voice.PUN;
 using Photon.Realtime;
 
 public class VideoChatManager : MonoBehaviour
@@ -11,26 +13,37 @@ public class VideoChatManager : MonoBehaviour
     public GameObject localCamera;
     public GameObject otherCamera;
     private Dictionary<string, Transform> usersAvatars = new Dictionary<string, Transform>();
-    // Start is called before the first frame update
+    private bool isInACall;
+    public Recorder photonVoiceRecorder;
+    [HideInInspector]
+    public PlayerNetworkSetup localPlayer;
+
     void Start()
     {
         photonView = GetComponent<PhotonView>();
-        //if (photonView.IsMine)
-        {
-            //FriendList.Instance.videoChatManager = this;
-            //VideoChatUIManager.Instance.videoChatManager = this;
-        }
     }
 
-    public void AddUser(string userId, Transform avatar, bool isLocal = false)
+    private void Update()
+    {
+        //if (Input.GetKeyDown(KeyCode.A))
+        //{
+        //    //photonVoiceNetwork.Client.OpChangeGroups(new byte[] { 0 }, new byte[] { 1 });            
+        //    PhotonVoiceNetwork.Instance.Client.OpChangeGroups(new byte[] { 0 }, new byte[] { 1 });
+        //    photonVoiceRecorder.InterestGroup = 1;
+        //}
+
+        //if (Input.GetKeyDown(KeyCode.S))
+        //{
+        //    //photonVoiceNetwork.Client.OpChangeGroups(new byte[] { 0 }, new byte[] { 1 });
+        //    PhotonVoiceNetwork.Instance.Client.OpChangeGroups(new byte[] { 1 }, new byte[] { 0 });
+        //    photonVoiceRecorder.InterestGroup = 0;
+        //}
+    }
+
+    public void AddUser(string userId, Transform avatar)
     {
         Debug.Log("User with Id: " + userId + " was added to VideoChatManager");
         usersAvatars.Add(userId, avatar);
-        //if (isLocal)
-        //{
-        //    camera.targetTexture = localRenderTexture;
-        //    localCamera = camera;
-        //}
     }
 
     public void SaveOther(string otherId)
@@ -90,6 +103,7 @@ public class VideoChatManager : MonoBehaviour
     {
         photonView.RPC("AcceptCallRPC", otherPlayer);
         ActivateCameras();
+        SetInCallVoice();
     }
 
     /// <summary>
@@ -102,6 +116,7 @@ public class VideoChatManager : MonoBehaviour
         VideoChatUIManager.Instance.CloseCallerCallRequest();
         VideoChatUIManager.Instance.OpenInCallUI();
         ActivateCameras();
+        SetInCallVoice();
     }
 
     public void DeclineCall()
@@ -126,6 +141,7 @@ public class VideoChatManager : MonoBehaviour
     {
         photonView.RPC("HangUpRPC", otherPlayer);
         DeactivateCameras();
+        SetNormalVoice();
     }
 
     [PunRPC]
@@ -135,6 +151,12 @@ public class VideoChatManager : MonoBehaviour
         VideoChatUIManager.Instance.CloseInCallUI();
         VideoChatUIManager.Instance.CloseVideoChatUI();
         DeactivateCameras();
+        SetNormalVoice();
+    }
+
+    public void ChangeMicrophoneState(bool state)
+    {
+        photonVoiceRecorder.TransmitEnabled = state;
     }
 
     #endregion
@@ -150,5 +172,19 @@ public class VideoChatManager : MonoBehaviour
     {
         localCamera.gameObject.SetActive(false);
         otherCamera.gameObject.SetActive(false);
+    }
+
+    public void SetInCallVoice()
+    {
+        localPlayer.ChangeSpatialBlend(0, otherPlayer);
+        PhotonVoiceNetwork.Instance.Client.OpChangeGroups(new byte[] { 0 }, new byte[] { 1 });
+        photonVoiceRecorder.InterestGroup = 1;
+    }
+
+    public void SetNormalVoice()
+    {
+        localPlayer.ChangeSpatialBlend(1, otherPlayer);
+        PhotonVoiceNetwork.Instance.Client.OpChangeGroups(new byte[] { 1 }, new byte[] { 0 });
+        photonVoiceRecorder.InterestGroup = 0;
     }
 }

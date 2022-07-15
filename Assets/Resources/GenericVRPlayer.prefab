@@ -578,6 +578,7 @@ MonoBehaviour:
   - {fileID: 3653637840890810929, guid: 089d38c2beff1f044b446797593d7269, type: 3}
   PlayerName_Text: {fileID: 4686709185550731369}
   avatarNumber: 0
+  speaker: {fileID: 3815030156754893615}
 --- !u!114 &3917365065689950666
 MonoBehaviour:
   m_ObjectHideFlags: 0
