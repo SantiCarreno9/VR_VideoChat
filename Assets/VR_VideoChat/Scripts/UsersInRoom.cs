@@ -8,43 +8,84 @@ using TMPro;
 
 public class UsersInRoom : UserList
 {
-    public static UsersInRoom Instance;
-    public SocialInteractionManager socialInteractionManager;
-    private List<User> usersInRoom = new List<User>();
+    [SerializeField]
+    private SocialInteractionManager socialInteractionManager;
 
+    [SerializeField]
+    private GameObject sendFriendRequestButton;
+    [SerializeField]
+    private GameObject waitingForResponseImage;
+
+    [Space]
     [Header("Friend Request UI")]
     [SerializeField]
     private GameObject friendRequestUI;
     [SerializeField]
     private TextMeshProUGUI friendRequestText;
 
-    private void Awake()
-    {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(this.gameObject);
-            return;
-        }
-        Instance = this;
-        DontDestroyOnLoad(gameObject);
-    }
+    private List<string> sentFriendRequests = new List<string>();
 
-    #region Friend Request
+    public void FillList()
+    {
+        if (PhotonNetwork.PlayerListOthers.Length > 0)
+        {
+            Player[] playerList = PhotonNetwork.PlayerListOthers;
+            for (int i = 0; i < playerList.Length; i++)
+            {
+                Player currentPlayer = playerList[i];
+                User currentUser = new User();
+                currentUser.userName = currentPlayer.NickName;
+                currentUser.userId = currentPlayer.UserId;
+                InstantiateUserButton(currentUser.userName, currentUser.userId);
+            }
+        }
+    }
 
     public void SendFriendRequest()
     {
         User targetUser = GetActiveToggleUser();
-
-        for (int j = 0; j < PhotonNetwork.PlayerList.Length; j++)
+        Player[] playerList = PhotonNetwork.PlayerListOthers;
+        for (int i = 0; i < playerList.Length; i++)
         {
-            if (targetUser.userId.Equals(PhotonNetwork.PlayerList[j].UserId, System.StringComparison.OrdinalIgnoreCase))
+            if (targetUser.userId.Equals(playerList[i].UserId, System.StringComparison.OrdinalIgnoreCase))
             {
-                socialInteractionManager.SendFriendRequest(PhotonNetwork.PlayerList[j]);
+                sentFriendRequests.Add(playerList[i].UserId);
+                socialInteractionManager.SendFriendRequest(playerList[i]);
                 break;
             }
         }
         usersToggleGroup.SetAllTogglesOff();
     }
+
+    public override void OnToggleSelected()
+    {
+        User user = GetActiveToggleUser();
+        if (!UserInfoManager.Instance.CheckIfItIsAlreadyAFriend(user))
+        {
+            listButtonsCont.SetActive(true);
+            sendFriendRequestButton.SetActive(true);
+            waitingForResponseImage.SetActive(false);
+            if (sentFriendRequests.Count > 0)
+            {
+                for (int i = 0; i < sentFriendRequests.Count; i++)
+                {
+                    if (sentFriendRequests[i].Equals(user.userId, System.StringComparison.Ordinal))
+                    {
+                        sendFriendRequestButton.SetActive(false);
+                        waitingForResponseImage.SetActive(true);
+                        break;
+                    }
+                }
+            }
+
+        }
+        else
+        {
+            listButtonsCont.SetActive(false);
+        }
+    }
+
+    #region Friend Request UI
 
     public void OpenFriendRequestUI(string otherName)
     {
@@ -60,48 +101,42 @@ public class UsersInRoom : UserList
 
     public void AcceptFriendRequest()
     {
-        socialInteractionManager.AcceptFriendRequest();
         CloseFriendRequestUI();
+        socialInteractionManager.AcceptFriendRequest();
+    }
+
+    public void RemoveUserFromSentRequestId(string userId)
+    {
+        usersToggleGroup.SetAllTogglesOff();
+        Debug.Log(sentFriendRequests.Count);
+        if (sentFriendRequests.Count > 0)
+        {
+            sentFriendRequests.Remove(userId);
+        }
+        Debug.Log(sentFriendRequests.Count);
     }
 
     public void DeclineFriendRequest()
     {
         CloseFriendRequestUI();
+        socialInteractionManager.DeclineFriendRequest();
     }
 
-    #endregion
-
-    public void FillList()
-    {
-        if (PhotonNetwork.PlayerList.Length > 1)
-        {
-            for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
-            {
-                Player currentPlayer = PhotonNetwork.PlayerList[i];
-                if (!currentPlayer.IsLocal)
-                {
-                    User currentUser = new User();
-                    currentUser.userName = currentPlayer.NickName;
-                    currentUser.userId = currentPlayer.UserId;
-                    usersInRoom.Add(currentUser);
-                    InstantiateUserButton(currentUser.userName, currentUser.userId);
-                }
-            }
-        }
-    }
+    #endregion       
 
     #region Photon Callback Methods
-
 
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
         Debug.Log("OnPlayerEnteredRoom: " + newPlayer.NickName + " and UserId: " + newPlayer.UserId);
         InstantiateUserButton(newPlayer.NickName, newPlayer.UserId);
+        usersToggleGroup.SetAllTogglesOff();
     }
 
     public override void OnPlayerLeftRoom(Player otherPlayer)
     {
-        DeleteUserButton(otherPlayer.NickName);
+        DeleteUserButton(otherPlayer.UserId);
+        usersToggleGroup.SetAllTogglesOff();
     }
 
     public override void OnEnable()
@@ -117,20 +152,5 @@ public class UsersInRoom : UserList
         DeleteAll();
     }
 
-    public override void OnToggleStateChanged(bool state)
-    {
-        Debug.Log("OnToggleStateChanged");
-        var activeToggle = usersToggleGroup.GetFirstActiveToggle();
-        User user = new User();
-        user.userName = activeToggle.name;
-        if (!UserInfoManager.Instance.CheckIfItIsAlreadyAFriend(user))
-        {
-            listButtonsCont.SetActive(true);
-        }
-        else
-        {
-            listButtonsCont.SetActive(false);
-        }
-    }
     #endregion
 }

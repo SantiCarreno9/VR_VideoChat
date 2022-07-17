@@ -2,31 +2,32 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
+using Photon.Realtime;
 
-public class SpawnManager : MonoBehaviour
+public class SpawnManager : MonoBehaviourPunCallbacks
 {
     [SerializeField]
-    GameObject GenericVRPlayerPrefab;
+    private GameObject genericVRPlayerPrefab;
 
-    public GameObject localXRRig;
+    [SerializeField]
+    private GameObject localXRRig;
 
-    public Vector3 spawnPosition;
-    // Start is called before the first frame update
+    [SerializeField]
+    private Vector2 xSpawnPositionRange;
+    [SerializeField]
+    private Vector2 zSpawnPositionRange;
+
     void Start()
     {
         if (PhotonNetwork.IsConnectedAndReady)
         {
             Debug.Log("Instantiating players");
-            GameObject playerAvatar = PhotonNetwork.Instantiate(GenericVRPlayerPrefab.name, spawnPosition, Quaternion.identity);
+            float xPosition = Random.Range(xSpawnPositionRange.x, xSpawnPositionRange.y);
+            float zPosition = Random.Range(zSpawnPositionRange.x, zSpawnPositionRange.y);
+            Vector3 spawnPosition = new Vector3(xPosition, 0, zPosition);
+            localXRRig.transform.position = spawnPosition;
+            GameObject playerAvatar = PhotonNetwork.Instantiate(genericVRPlayerPrefab.name, spawnPosition, Quaternion.identity);
             playerAvatar.GetComponent<PlayerNetworkSetup>().LocalXRRig = localXRRig;
-            localXRRig.GetComponent<AvatarInputConverter>().MainAvatarTransform = playerAvatar.transform;
-
         }
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
     }
 }

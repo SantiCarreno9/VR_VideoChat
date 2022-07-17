@@ -8,20 +8,26 @@ using TMPro;
 public class PlayerNetworkSetup : MonoBehaviourPunCallbacks
 {
     public GameObject LocalXRRig;
-    public GameObject MainAvatarGameobject;
-    public GameObject AvatarHead;
-    public GameObject AvatarBody;
-    public GameObject AvatarHand_Left;
-    public GameObject AvatarHand_Right;
+    [SerializeField]
+    private GameObject MainAvatarGameobject;
+    [SerializeField]
+    private GameObject AvatarHead;
+    [SerializeField]
+    private GameObject AvatarBody;
+    [SerializeField]
+    private GameObject AvatarHand_Left;
+    [SerializeField]
+    private GameObject AvatarHand_Right;
 
-    public GameObject[] AvatarModelPrefabs;
+    [SerializeField]
+    private GameObject[] AvatarModelPrefabs;
 
-    public TextMeshProUGUI PlayerName_Text;
-    public int avatarNumber = 0;
+    [SerializeField]
+    private TextMeshProUGUI PlayerName_Text;
 
-    public AudioSource speaker;
-    //public Camera videoChatCamera;
-    // Start is called before the first frame update
+    [SerializeField]
+    private AudioSource speaker;
+
     void Start()
     {
         if (photonView.IsMine)
@@ -35,11 +41,11 @@ public class PlayerNetworkSetup : MonoBehaviourPunCallbacks
             avatarInputConverter.MainAvatarTransform = MainAvatarGameobject.transform;
             #endregion
 
-            #region Avatar Configuration
-            avatarNumber = Random.Range(0, AvatarModelPrefabs.Length);
+            #region Avatar Setup
+            int avatarNumber = Random.Range(0, AvatarModelPrefabs.Length);
             photonView.RPC("InitializeSelectedAvatarModel", RpcTarget.AllBuffered, avatarNumber);
             SetLayerRecursively(AvatarHead, 6);
-            SetLayerRecursively(AvatarBody, 7);
+            SetLayerRecursively(AvatarBody, 6);
             MainAvatarGameobject.AddComponent<AudioListener>();
             #endregion            
 
@@ -47,27 +53,16 @@ public class PlayerNetworkSetup : MonoBehaviourPunCallbacks
         }
         else
         {
-            //The player is remote            
             SetLayerRecursively(AvatarHead, 0);
             SetLayerRecursively(AvatarBody, 0);
-
             FindObjectOfType<VideoChatManager>().AddUser(photonView.Owner.UserId, AvatarBody.transform);
         }
 
         if (PlayerName_Text != null)
-        {
             PlayerName_Text.text = photonView.Owner.NickName;
-        }
     }
 
-    private void SetLayerRecursively(GameObject go, int layerNumber)
-    {
-        if (go == null) return;
-        foreach (Transform trans in go.GetComponentsInChildren<Transform>(true))
-        {
-            trans.gameObject.layer = layerNumber;
-        }
-    }
+    #region Avatar Setup
 
     [PunRPC]
     public void InitializeSelectedAvatarModel(int avatarSelectionNumber)
@@ -78,12 +73,9 @@ public class PlayerNetworkSetup : MonoBehaviourPunCallbacks
         SetUpAvatarGameobject(avatarHolder.BodyTransform, AvatarBody.transform);
         SetUpAvatarGameobject(avatarHolder.HandLeftTransform, AvatarHand_Left.transform);
         SetUpAvatarGameobject(avatarHolder.HandRightTransform, AvatarHand_Right.transform);
+
         if (photonView.IsMine)
-        {
-            //instantiatedAvatarGameobject.transform.SetParent(LocalXRRig.transform);
             LocalXRRig.GetComponent<AvatarInputConverter>().enabled = true;
-        }
-        //GameObject instantiatedAvatarGameobject = Instantiate(AvatarModelPrefabs[avatarSelectionNumber], LocalXRRig.transform);        
     }
 
     void SetUpAvatarGameobject(Transform avatarModelTransform, Transform mainAvatarTransform)
@@ -93,10 +85,17 @@ public class PlayerNetworkSetup : MonoBehaviourPunCallbacks
         avatarModelTransform.localRotation = Quaternion.identity;
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="value"> 0:2D  1:3D</param>
+    private void SetLayerRecursively(GameObject go, int layerNumber)
+    {
+        if (go == null) return;
+        foreach (Transform trans in go.GetComponentsInChildren<Transform>(true))
+        {
+            trans.gameObject.layer = layerNumber;
+        }
+    }
+    #endregion
+
+    #region Voice    
     public void ChangeSpatialBlend(int value, Player target)
     {
         photonView.RPC("ChangeSpatialBlendRPC", target, value);
@@ -108,4 +107,6 @@ public class PlayerNetworkSetup : MonoBehaviourPunCallbacks
     {
         speaker.spatialBlend = value;
     }
+
+    #endregion
 }

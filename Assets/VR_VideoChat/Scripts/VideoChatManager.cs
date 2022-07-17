@@ -6,39 +6,31 @@ using Photon.Voice.Unity;
 using Photon.Voice.PUN;
 using Photon.Realtime;
 
-public class VideoChatManager : MonoBehaviour
+public class VideoChatManager : MonoBehaviourPunCallbacks
 {
-    private Player otherPlayer;
-    private PhotonView photonView;
-    public GameObject localCamera;
-    public GameObject otherCamera;
+    [SerializeField]
+    private VideoChatUIManager videoChatUIManager;
+
+    [Header("Video Chat")]
+    [SerializeField]
+    private GameObject localCamera;
+    [SerializeField]
+    private GameObject otherCamera;
     private Dictionary<string, Transform> usersAvatars = new Dictionary<string, Transform>();
-    private bool isInACall;
-    public Recorder photonVoiceRecorder;
+
+    [Header("Voice Chat")]
+    [SerializeField]
+    private Recorder photonVoiceRecorder;
+    private const byte globalVoiceRoom = 0;
+    private List<byte> roomsInUse = new List<byte>();
+    private byte currentVoiceRoom;
+
     [HideInInspector]
     public PlayerNetworkSetup localPlayer;
+    private Player otherPlayer;
+    private bool isInACall;
 
-    void Start()
-    {
-        photonView = GetComponent<PhotonView>();
-    }
-
-    private void Update()
-    {
-        //if (Input.GetKeyDown(KeyCode.A))
-        //{
-        //    //photonVoiceNetwork.Client.OpChangeGroups(new byte[] { 0 }, new byte[] { 1 });            
-        //    PhotonVoiceNetwork.Instance.Client.OpChangeGroups(new byte[] { 0 }, new byte[] { 1 });
-        //    photonVoiceRecorder.InterestGroup = 1;
-        //}
-
-        //if (Input.GetKeyDown(KeyCode.S))
-        //{
-        //    //photonVoiceNetwork.Client.OpChangeGroups(new byte[] { 0 }, new byte[] { 1 });
-        //    PhotonVoiceNetwork.Instance.Client.OpChangeGroups(new byte[] { 1 }, new byte[] { 0 });
-        //    photonVoiceRecorder.InterestGroup = 0;
-        //}
-    }
+    #region Local Methods
 
     public void AddUser(string userId, Transform avatar)
     {
@@ -46,40 +38,30 @@ public class VideoChatManager : MonoBehaviour
         usersAvatars.Add(userId, avatar);
     }
 
-    public void SaveOther(string otherId)
+    private Player GetPlayer(string otherId)
     {
-        for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
+        Player[] playerList = PhotonNetwork.PlayerListOthers;
+        for (int i = 0; i < playerList.Length; i++)
         {
-            if (PhotonNetwork.PlayerList[i].UserId.Equals(otherId, System.StringComparison.Ordinal))
+            if (playerList[i].UserId.Equals(otherId, System.StringComparison.Ordinal))
             {
-                otherPlayer = PhotonNetwork.PlayerList[i];
-                break;
+                return playerList[i];
             }
         }
+        return null;
     }
 
-    #region Call Request
+    #endregion
 
-    #region Caller Methods
+    #region Call Methods
+
+    #region Caller Methods    
 
     public void CallFriend(Player targetPlayer)
     {
         otherPlayer = targetPlayer;
+        videoChatUIManager.OpenCallerCallRequest(otherPlayer.NickName);
         photonView.RPC("ShowCallRequestRPC", targetPlayer, PhotonNetwork.LocalPlayer.UserId, PhotonNetwork.LocalPlayer.NickName);
-        VideoChatUIManager.Instance.OpenCallerCallRequest(otherPlayer.NickName);
-    }
-
-    /// <summary>
-    /// The call request UI is shown in the receiver session
-    /// </summary>
-    /// <param name="callerUserId"></param>
-    /// <param name="callerUserName"></param>
-    [PunRPC]
-    public void ShowCallRequestRPC(string callerUserId, string callerUserName)
-    {
-        Debug.Log("Call from " + callerUserName);
-        VideoChatUIManager.Instance.OpenReceiverCallRequest(callerUserName);
-        SaveOther(callerUserId);
     }
 
     public void CancelCallRequest()
@@ -88,78 +70,115 @@ public class VideoChatManager : MonoBehaviour
     }
 
     [PunRPC]
+    public void ShowCallRequestRPC(string callerUserId, string callerUserName)
+    {
+        if (!isInACall)
+        {
+            videoChatUIManager.OpenReceiverCallRequest(callerUserName);
+            otherPlayer = GetPlayer(callerUserId);
+        }
+        else DeclineCallAutomatically(GetPlayer(callerUserId));
+    }
+
+    [PunRPC]
     public void CancelCallRequestRPC()
     {
         Debug.Log("Call request canceled");
-        VideoChatUIManager.Instance.CloseReceiverCallRequest();
-        VideoChatUIManager.Instance.CloseVideoChatUI();
+        videoChatUIManager.CloseReceiverCallRequest();
+        if (!isInACall) videoChatUIManager.CloseVideoChatUI();
     }
 
     #endregion
 
-    #region Receiver
-
-    public void AcceptCall()
-    {
-        photonView.RPC("AcceptCallRPC", otherPlayer);
-        ActivateCameras();
-        SetInCallVoice();
-    }
-
-    /// <summary>
-    /// The receiver accepts and sends this confirmation to the caller
-    /// </summary>
-    [PunRPC]
-    public void AcceptCallRPC()
-    {
-        Debug.Log("Call request accepted");
-        VideoChatUIManager.Instance.CloseCallerCallRequest();
-        VideoChatUIManager.Instance.OpenInCallUI();
-        ActivateCameras();
-        SetInCallVoice();
-    }
+    #region Receiver Methods   
 
     public void DeclineCall()
     {
-        photonView.RPC("DeclineCallRPC", otherPlayer);
+        string message = PhotonNetwork.LocalPlayer.NickName + " has declined the call";
+        photonView.RPC("DeclineCallRPC", otherPlayer, message);
     }
 
-    /// <summary>
-    /// The caller declines and closes the request UI in the caller session
-    /// </summary>
-    [PunRPC]
-    public void DeclineCallRPC()
+    private void DeclineCallAutomatically(Player requester)
     {
-        Debug.Log("Call declined");
-        VideoChatUIManager.Instance.CloseCallerCallRequest();
-        VideoChatUIManager.Instance.CloseVideoChatUI();
+        string message = PhotonNetwork.LocalPlayer.NickName + " is in a call";
+        photonView.RPC("DeclineCallRPC", requester, message);
     }
 
-    #endregion
+    [PunRPC]
+    public void DeclineCallRPC(string reason)
+    {
+        StartCoroutine(videoChatUIManager.ShowDeclinedCallRequest(reason));
+    }
+
+    public void JoinCall()
+    {
+        byte voiceChatRoom = 1;
+
+        if (roomsInUse.Count > 0)
+        {
+            while (roomsInUse.Contains(voiceChatRoom))
+                voiceChatRoom++;
+        }
+        currentVoiceRoom = voiceChatRoom;
+        isInACall = true;
+        ActivateCameras();
+        SetInCallVoice();
+        photonView.RPC("AnswerCallRPC", otherPlayer, voiceChatRoom);
+        photonView.RPC("AddRoomInUseRPC", RpcTarget.AllBuffered, voiceChatRoom);
+    }
+
+    [PunRPC]
+    public void AnswerCallRPC(byte voiceRoom)
+    {
+        Debug.Log("Call request accepted");
+        videoChatUIManager.CloseCallerCallRequest();
+        videoChatUIManager.OpenInCallUI();
+        ActivateCameras();
+        currentVoiceRoom = voiceRoom;
+        SetInCallVoice();
+        isInACall = true;
+    }
+
+    [PunRPC]
+    public void AddRoomInUseRPC(byte roomInUse)
+    {
+        roomsInUse.Add(roomInUse);
+    }
+
+    [PunRPC]
+    public void DeleteRoomInUseRPC(byte roomInUse)
+    {
+        roomsInUse.Remove(roomInUse);
+    }
 
     public void HangUp()
     {
-        photonView.RPC("HangUpRPC", otherPlayer);
+        Debug.Log("HangUP");
         DeactivateCameras();
         SetNormalVoice();
+        isInACall = false;
+        photonView.RPC("HangUpRPC", otherPlayer);
+        photonView.RPC("DeleteRoomInUseRPC", RpcTarget.AllBuffered, currentVoiceRoom);
     }
 
     [PunRPC]
     public void HangUpRPC()
     {
         Debug.Log("HangUp");
-        VideoChatUIManager.Instance.CloseInCallUI();
-        VideoChatUIManager.Instance.CloseVideoChatUI();
+        videoChatUIManager.CloseInCallUI();
+        videoChatUIManager.CloseVideoChatUI();
         DeactivateCameras();
         SetNormalVoice();
+        isInACall = false;
     }
+
+
+    #endregion
 
     public void ChangeMicrophoneState(bool state)
     {
         photonVoiceRecorder.TransmitEnabled = state;
     }
-
-    #endregion
 
     private void ActivateCameras()
     {
@@ -176,15 +195,39 @@ public class VideoChatManager : MonoBehaviour
 
     public void SetInCallVoice()
     {
+        //2D Spatial Blend
         localPlayer.ChangeSpatialBlend(0, otherPlayer);
-        PhotonVoiceNetwork.Instance.Client.OpChangeGroups(new byte[] { 0 }, new byte[] { 1 });
+        PhotonVoiceNetwork.Instance.Client.OpChangeGroups(new byte[] { globalVoiceRoom }, new byte[] { currentVoiceRoom });
         photonVoiceRecorder.InterestGroup = 1;
     }
 
     public void SetNormalVoice()
     {
+        //3D Spatial Blend
         localPlayer.ChangeSpatialBlend(1, otherPlayer);
-        PhotonVoiceNetwork.Instance.Client.OpChangeGroups(new byte[] { 1 }, new byte[] { 0 });
+        PhotonVoiceNetwork.Instance.Client.OpChangeGroups(new byte[] { currentVoiceRoom }, new byte[] { globalVoiceRoom });
         photonVoiceRecorder.InterestGroup = 0;
     }
+
+    #endregion
+
+    public override void OnPlayerLeftRoom(Player otherPlayer)
+    {
+        if (this.otherPlayer != null)
+        {
+            if (otherPlayer.UserId.Equals(this.otherPlayer.UserId, System.StringComparison.Ordinal))
+            {
+                if (isInACall)
+                {
+                    HangUp();
+                    videoChatUIManager.CloseInCallUI();
+                    videoChatUIManager.CloseVideoChatUI();
+                    this.otherPlayer = null;
+                }
+            }
+        }
+        PhotonNetwork.Destroy(usersAvatars[otherPlayer.UserId].gameObject);
+        usersAvatars.Remove(otherPlayer.UserId);
+    }
+
 }

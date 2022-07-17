@@ -13,14 +13,14 @@ public class LoginManagerEditorScript : Editor
         EditorGUILayout.HelpBox("This script is responsible for connecting to Photon Server.", MessageType.Info);
 
         LoginManager loginManager = target as LoginManager;
-        if (GUILayout.Button("Connect Anonymously"))
+        if (GUILayout.Button("Connect with random name"))
         {
-            loginManager.ConnectAnonymously();
+            loginManager.ConnectWithRandomName();
         }
 
         if (GUILayout.Button("Connect"))
         {
-            loginManager.ConnectToGame();
+            loginManager.ConnectWithExistingUser();
         }
 
     }

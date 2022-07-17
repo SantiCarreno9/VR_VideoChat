@@ -1,42 +1,45 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
 using TMPro;
 using UnityEngine.UI;
-using Photon.Realtime;
 
 public class UserList : MonoBehaviourPunCallbacks
 {
     [Header("UserList")]
-    public GameObject userButtonPrefab;
-    public GameObject scrollViewCont;
+    [SerializeField]
+    private GameObject userButtonPrefab;
+    [SerializeField]
+    private GameObject scrollViewCont;
+
     public ToggleGroup usersToggleGroup;
     public GameObject listButtonsCont;
 
-
-    public void InstantiateUserButton(string userName, string userID, bool interactable = true)
+    public void InstantiateUserButton(string userName, string userId, bool interactable = true)
     {
         GameObject userButtonInstance = Instantiate(userButtonPrefab, scrollViewCont.transform);
+        userButtonInstance.name = userId;
         userButtonInstance.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = userName;
-        userButtonInstance.transform.GetChild(1).GetComponent<TextMeshProUGUI>().text = userID;
-        userButtonInstance.name = userName;
-        Toggle currentToggle = userButtonInstance.GetComponent<Toggle>();
-        currentToggle.interactable = interactable;
-        currentToggle.group = usersToggleGroup;
-        userButtonInstance.GetComponent<Toggle>().onValueChanged.AddListener(state =>
+
+        Toggle userButtonToggle = userButtonInstance.GetComponent<Toggle>();
+        userButtonToggle.interactable = interactable;
+        userButtonToggle.group = usersToggleGroup;
+        userButtonToggle.onValueChanged.AddListener(state =>
         {
             if (usersToggleGroup.AnyTogglesOn())
-                OnToggleStateChanged(state);
+            {
+                listButtonsCont.SetActive(true);
+                OnToggleSelected();
+            }
             else listButtonsCont.SetActive(false);
         });
     }
 
-    public void DeleteUserButton(string userName)
+
+    public void DeleteUserButton(string userId)
     {
         for (int i = 0; i < scrollViewCont.transform.childCount; i++)
         {
-            if (scrollViewCont.transform.GetChild(i).name.Equals(userName, System.StringComparison.OrdinalIgnoreCase))
+            if (scrollViewCont.transform.GetChild(i).name.Equals(userId, System.StringComparison.Ordinal))
             {
                 Destroy(scrollViewCont.transform.GetChild(i).gameObject);
                 break;
@@ -64,26 +67,25 @@ public class UserList : MonoBehaviourPunCallbacks
         }
     }
 
-    public virtual void OnToggleStateChanged(bool state)
+    public virtual void OnToggleSelected()
     {
-        listButtonsCont.SetActive(true);
+
     }
 
     public User GetActiveToggleUser()
     {
-        var activeToggle = usersToggleGroup.GetFirstActiveToggle();
-        if (activeToggle != null)
+        if (usersToggleGroup.AnyTogglesOn())
         {
-            return GetToggleUser(activeToggle.gameObject);
+            return GetToggleUser(usersToggleGroup.GetFirstActiveToggle().gameObject);
         }
         else return null;
     }
 
-    public User GetToggleUser(GameObject toggle)
+    private User GetToggleUser(GameObject toggle)
     {
         User user = new User();
+        user.userId = toggle.name;
         user.userName = toggle.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text;
-        user.userId = toggle.transform.GetChild(1).GetComponent<TextMeshProUGUI>().text;
         return user;
     }
 

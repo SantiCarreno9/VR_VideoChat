@@ -55,6 +55,12 @@ MonoBehaviour:
   - AcceptFriendRequestRPC
   - RemoveFriendRPC
   - ChangeSpatialBlendRPC
+  - AddRoomInUseRPC
+  - DeleteRoomInUseRPC
+  - JoinCallRPC
+  - AnswerCallRPC
+  - ShowFriendRequestRPC
+  - DeclineFriendRequestRPC
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1

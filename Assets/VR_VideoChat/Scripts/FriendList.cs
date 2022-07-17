@@ -6,20 +6,10 @@ using Photon.Pun;
 
 public class FriendList : UserList
 {
-    public static FriendList Instance;
-
-    public VideoChatManager videoChatManager;
-    public SocialInteractionManager socialInteractionManager;
-
-    private void Awake()
-    {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(this.gameObject);
-            return;
-        }
-        Instance = this;
-    }
+    [SerializeField]
+    private VideoChatManager videoChatManager;
+    [SerializeField]
+    private SocialInteractionManager socialInteractionManager;
 
     public override void OnEnable()
     {
@@ -33,7 +23,7 @@ public class FriendList : UserList
         DeleteAll();
     }
 
-    #region PUN Callbacks
+    #region Photon Callback Methods
 
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
@@ -45,15 +35,9 @@ public class FriendList : UserList
         CheckFriendsStatus();
     }
 
-    //public override void OnFriendListUpdate(List<FriendInfo> friendList)
-    //{
-    //    for (int i = 0; i < friendList.Count; i++)
-    //    {
-    //        ChangeUserState(friendList[i].UserId, friendList[i].IsOnline);
-    //    }
-    //}
-
     #endregion
+
+    #region Buttons Methods
 
     public void AddFriend(User newFriend)
     {
@@ -65,37 +49,40 @@ public class FriendList : UserList
     {
         User friendToRemove = GetActiveToggleUser();
         RemoveFriend(friendToRemove);
-        for (int j = 0; j < PhotonNetwork.PlayerList.Length; j++)
+        Player[] playerList = PhotonNetwork.PlayerListOthers;
+        for (int j = 0; j < playerList.Length; j++)
         {
-            if (friendToRemove.userId.Equals(PhotonNetwork.PlayerList[j].UserId, System.StringComparison.OrdinalIgnoreCase))
+            if (friendToRemove.userId.Equals(playerList[j].UserId, System.StringComparison.OrdinalIgnoreCase))
             {
-                socialInteractionManager.RemoveFriend(PhotonNetwork.PlayerList[j]);
+                socialInteractionManager.RemoveFriend(playerList[j]);
                 break;
             }
         }
         usersToggleGroup.SetAllTogglesOff();
-    }
-
-    public void RemoveFriend(User friendToRemove)
-    {
-        UserInfoManager.Instance.RemoveFriend(friendToRemove);
-        DeleteUserButton(friendToRemove.userName);
-        listButtonsCont.gameObject.SetActive(false);
     }
 
     public void CallFriend()
     {
         User userToCall = GetActiveToggleUser();
-
-        for (int j = 0; j < PhotonNetwork.PlayerList.Length; j++)
+        Player[] playerList = PhotonNetwork.PlayerListOthers;
+        for (int j = 0; j < playerList.Length; j++)
         {
-            if (userToCall.userId.Equals(PhotonNetwork.PlayerList[j].UserId, System.StringComparison.OrdinalIgnoreCase))
+            if (userToCall.userId.Equals(playerList[j].UserId, System.StringComparison.Ordinal))
             {
-                videoChatManager.CallFriend(PhotonNetwork.PlayerList[j]);
+                videoChatManager.CallFriend(playerList[j]);
                 break;
             }
         }
         usersToggleGroup.SetAllTogglesOff();
+    }
+
+    #endregion
+
+    public void RemoveFriend(User friendToRemove)
+    {
+        UserInfoManager.Instance.RemoveFriend(friendToRemove);
+        DeleteUserButton(friendToRemove.userId);
+        listButtonsCont.gameObject.SetActive(false);
     }
 
     public void FillList()
@@ -119,34 +106,22 @@ public class FriendList : UserList
         {
             if (userInfo.friendList.Count > 0)
             {
+                Player[] playerList = PhotonNetwork.PlayerListOthers;
                 for (int i = 0; i < userInfo.friendList.Count; i++)
                 {
-                    for (int j = 0; j < PhotonNetwork.PlayerList.Length; j++)
+                    bool isConnected = false;
+                    for (int j = 0; j < playerList.Length; j++)
                     {
-                        if (userInfo.friendList[i].userId.Equals(PhotonNetwork.PlayerList[j].UserId, System.StringComparison.OrdinalIgnoreCase))
+                        if (userInfo.friendList[i].userId.Equals(playerList[j].UserId, System.StringComparison.Ordinal))
                         {
-                            ChangeUserState(userInfo.friendList[i].userId, true);
+                            isConnected = true;
                             break;
                         }
-                        else ChangeUserState(userInfo.friendList[i].userId, false);
                     }
+                    ChangeUserState(userInfo.friendList[i].userId, isConnected);
                 }
             }
         }
-
-        //Find Friends Alternative
-        //if (userInfoManager.GetLocalUserInfo(out UserInfo userInfo))
-        //{
-        //    if (userInfo.friendList.Count > 0)
-        //    {
-        //        string[] friends = new string[userInfo.friendList.Count];
-        //        for (int i = 0; i < userInfo.friendList.Count; i++)
-        //        {
-        //            friends[i] = userInfo.friendList[i].userId;
-        //        }
-        //        PhotonNetwork.FindFriends(friends);
-        //    }
-        //}
     }
 
 }

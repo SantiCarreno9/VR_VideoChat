@@ -12,7 +12,8 @@ public class MultiplayerVRSynchronization : MonoBehaviour, IPunObservable
 
     //Main VRPlayer Transform Synch
     [Header("Main VRPlayer Transform Synch")]
-    public Transform generalVRPlayerTransform;
+    [SerializeField]
+    private Transform generalVRPlayerTransform;
 
     //Position
     private float m_Distance_GeneralVRPlayer;
@@ -27,7 +28,8 @@ public class MultiplayerVRSynchronization : MonoBehaviour, IPunObservable
 
     //Main Avatar Transform Synch
     [Header("Main Avatar Transform Synch")]
-    public Transform mainAvatarTransform;
+    [SerializeField]
+    private Transform mainAvatarTransform;
 
 
 
@@ -44,7 +46,8 @@ public class MultiplayerVRSynchronization : MonoBehaviour, IPunObservable
     //Head  Synch
     //Rotation
     [Header("Avatar Head Transform Synch")]
-    public Transform headTransform;
+    [SerializeField]
+    private Transform headTransform;
 
     private Quaternion m_NetworkRotation_Head;
     private float m_Angle_Head;
@@ -52,7 +55,8 @@ public class MultiplayerVRSynchronization : MonoBehaviour, IPunObservable
     //Body Synch
     //Rotation
     [Header("Avatar Body Transform Synch")]
-    public Transform bodyTransform;
+    [SerializeField]
+    private Transform bodyTransform;
 
     private Quaternion m_NetworkRotation_Body;
     private float m_Angle_Body;
@@ -60,8 +64,10 @@ public class MultiplayerVRSynchronization : MonoBehaviour, IPunObservable
 
     //Hands Synch
     [Header("Hands Transform Synch")]
-    public Transform leftHandTransform;
-    public Transform rightHandTransform;
+    [SerializeField]
+    private Transform leftHandTransform;
+    [SerializeField]
+    private Transform rightHandTransform;
 
     //Left Hand Sync
     //Position
@@ -142,7 +148,7 @@ public class MultiplayerVRSynchronization : MonoBehaviour, IPunObservable
             mainAvatarTransform.localRotation = Quaternion.RotateTowards(mainAvatarTransform.localRotation, this.m_NetworkRotation_MainAvatar, this.m_Angle_MainAvatar * (1.0f / PhotonNetwork.SerializationRate));
 
 
-          
+
             headTransform.localRotation = Quaternion.RotateTowards(headTransform.localRotation, this.m_NetworkRotation_Head, this.m_Angle_Head * (1.0f / PhotonNetwork.SerializationRate));
 
             bodyTransform.localRotation = Quaternion.RotateTowards(bodyTransform.localRotation, this.m_NetworkRotation_Body, this.m_Angle_Body * (1.0f / PhotonNetwork.SerializationRate));

@@ -6,45 +6,52 @@ using TMPro;
 
 public class VideoChatUIManager : MonoBehaviour
 {
-    public static VideoChatUIManager Instance;
-    public VideoChatManager videoChatManager;
+    [SerializeField]
+    private VideoChatManager videoChatManager;
+    [SerializeField]
+    private GameObject videoChatUI;
 
-    public GameObject videoChatUI;
-
+    [Space]
     [Header("Call Request")]
-    public GameObject receiverCallRequestUI;
-    public GameObject callerCallRequestUI;
-    public TextMeshProUGUI callerNameText;
-    public TextMeshProUGUI receiverNameText;
+
+    [Header("Receiver")]
+    [SerializeField]
+    private GameObject receiverCallRequestUI;
+    [SerializeField]
+    private GameObject callingUI;
+    [SerializeField]
+    private TextMeshProUGUI receiverNameText;
+    [SerializeField]
+    private GameObject callDeclinedUI;
+    [SerializeField]
+    private TextMeshProUGUI callDeclinedMessageText;
+
+    [Header("Caller")]
+    [SerializeField]
+    private GameObject callerCallRequestUI;
+    [SerializeField]
+    private TextMeshProUGUI callerNameText;
+
 
     [Header("In call UI")]
-    public GameObject inCallUI;
-    public TextMeshProUGUI otherNameText;
-    public GameObject localPlayerCamera;
-    public GameObject otherPlayerCamera;
-    public Image microphoneImage;
-    public Sprite microphoneNormalIcon;
-    public Sprite microphoneClosedIcon;
+    [SerializeField]
+    private GameObject inCallUI;
+    [SerializeField]
+    private TextMeshProUGUI otherNameText;
+    [SerializeField]
+    private Image microphoneImage;
+    [SerializeField]
+    private Sprite microphoneNormalIcon;
+    [SerializeField]
+    private Sprite microphoneClosedIcon;
 
     private bool microphoneState = true;
     private string otherName;
 
-    private void Awake()
-    {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(this.gameObject);
-            return;
-        }
-        Instance = this;
-    }
 
     public void CloseVideoChatUI()
     {
         videoChatUI.SetActive(false);
-        CloseInCallUI();
-        CloseCallerCallRequest();
-        CloseReceiverCallRequest();
     }
 
     #region Call Request
@@ -55,6 +62,7 @@ public class VideoChatUIManager : MonoBehaviour
     {
         this.otherName = otherName;
         videoChatUI.SetActive(true);
+        callingUI.SetActive(true);
         callerCallRequestUI.SetActive(true);
         receiverNameText.text = otherName;
     }
@@ -62,7 +70,18 @@ public class VideoChatUIManager : MonoBehaviour
     public void CloseCallerCallRequest()
     {
         callerCallRequestUI.SetActive(false);
-        receiverNameText.text = null;
+        callingUI.SetActive(false);
+        callDeclinedUI.SetActive(false);
+    }
+
+    public IEnumerator ShowDeclinedCallRequest(string message)
+    {
+        callingUI.SetActive(false);
+        callDeclinedUI.SetActive(true);
+        callDeclinedMessageText.text = message;
+        yield return new WaitForSeconds(2);
+        CloseCallerCallRequest();
+        CloseVideoChatUI();
     }
 
     #endregion
@@ -93,24 +112,22 @@ public class VideoChatUIManager : MonoBehaviour
     {
         videoChatUI.SetActive(true);
         inCallUI.SetActive(true);
-        receiverNameText.text = otherName;
-        //localPlayerCamera.SetActive(true);
-        //otherPlayerCamera.SetActive(true);
+        otherNameText.text = otherName;
     }
 
     public void CloseInCallUI()
     {
         inCallUI.SetActive(false);
-        receiverNameText.text = otherName;
-        //localPlayerCamera.SetActive(false);
-        //otherPlayerCamera.SetActive(false);
+        otherNameText.text = "Other";
     }
 
     #endregion
 
+    #region Buttons Methods
+
     public void AnswerCall()
     {
-        videoChatManager.AcceptCall();
+        videoChatManager.JoinCall();
         CloseReceiverCallRequest();
         OpenInCallUI();
     }
@@ -145,4 +162,5 @@ public class VideoChatUIManager : MonoBehaviour
         microphoneState = !microphoneState;
         videoChatManager.ChangeMicrophoneState(microphoneState);
     }
+    #endregion
 }

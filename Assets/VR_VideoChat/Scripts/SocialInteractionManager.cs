@@ -1,11 +1,15 @@
 using Photon.Pun;
 using Photon.Realtime;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class SocialInteractionManager : MonoBehaviour
 {
+    [SerializeField]
+    private UsersInRoom usersInRoom;
+    [SerializeField]
+    private FriendList friendList;
+
     private PhotonView photonView;
     private Player other;
     private Queue<string> requestersId = new Queue<string>();
@@ -14,11 +18,42 @@ public class SocialInteractionManager : MonoBehaviour
     private void Start()
     {
         photonView = GetComponent<PhotonView>();
-        //if (photonView.IsMine)
-        {
-            //UsersInRoom.Instance.socialInteractionManager = this;
-        }
     }
+
+    #region Methods
+    private Player GetPlayer(string otherId)
+    {
+        Player[] playerList = PhotonNetwork.PlayerListOthers;
+        for (int i = 0; i < playerList.Length; i++)
+        {
+            if (playerList[i].UserId.Equals(otherId, System.StringComparison.Ordinal))
+            {
+                return playerList[i];
+            }
+        }
+        return null;
+    }
+
+    private void SaveNewFriend()
+    {
+        User newFriend = new User();
+        newFriend.userName = other.NickName;
+        newFriend.userId = other.UserId;
+        friendList.AddFriend(newFriend);
+    }
+
+    private void ShowNextFriendRequest()
+    {
+        if (requestersId.Count > 0)
+        {
+            other = GetPlayer(requestersId.Dequeue());
+            string requesterName = other.NickName;
+            usersInRoom.OpenFriendRequestUI(requesterName);
+        }
+        else isFriendRequestOpen = false;
+    }
+
+    #endregion
 
 
     #region Friend Request
@@ -26,58 +61,46 @@ public class SocialInteractionManager : MonoBehaviour
     public void SendFriendRequest(Player targetPlayer)
     {
         other = targetPlayer;
-        photonView.RPC("SendFriendRequestRPC", targetPlayer, PhotonNetwork.LocalPlayer.UserId, PhotonNetwork.LocalPlayer.NickName);
+        photonView.RPC("ShowFriendRequestRPC", targetPlayer, PhotonNetwork.LocalPlayer.UserId);
     }
 
-    /// <summary>
-    /// Friend request target receives 
-    /// </summary>
-    /// <param name="requesterId"></param>
-    /// <param name="requesterName"></param>
     [PunRPC]
-    private void SendFriendRequestRPC(string requesterId, string requesterName)
+    private void ShowFriendRequestRPC(string requesterId)
     {
+        Debug.Log("ShowFriendRequest from " + requesterId);
         requestersId.Enqueue(requesterId);
         if (!isFriendRequestOpen)
         {
-            ShowFriendRequest();
+            ShowNextFriendRequest();
             isFriendRequestOpen = true;
         }
     }
-
-    private void ShowFriendRequest()
-    {
-        if (requestersId.Count > 0)
-        {
-            other = GetPlayer(requestersId.Dequeue());
-            string requesterName = other.NickName;
-            UsersInRoom.Instance.OpenFriendRequestUI(requesterName);
-        }
-        else isFriendRequestOpen = false;
-    }
-
 
     public void AcceptFriendRequest()
     {
         photonView.RPC("AcceptFriendRequestRPC", other, PhotonNetwork.LocalPlayer.UserId);
         SaveNewFriend();
+        ShowNextFriendRequest();
     }
 
-
-    /// <summary>
-    /// Requester receives response
-    /// </summary>
-    /// <param name="userId"></param>
     [PunRPC]
     private void AcceptFriendRequestRPC(string userId)
     {
         other = GetPlayer(userId);
+        usersInRoom.RemoveUserFromSentRequestId(userId);
         SaveNewFriend();
     }
 
     public void DeclineFriendRequest()
     {
-        ShowFriendRequest();
+        photonView.RPC("DeclineFriendRequestRPC", other, PhotonNetwork.LocalPlayer.UserId);
+        ShowNextFriendRequest();
+    }
+
+    [PunRPC]
+    private void DeclineFriendRequestRPC(string userId)
+    {
+        usersInRoom.RemoveUserFromSentRequestId(userId);
     }
 
     public void RemoveFriend(Player friendToRemove)
@@ -91,34 +114,12 @@ public class SocialInteractionManager : MonoBehaviour
         User friendToRemove = new User();
         friendToRemove.userName = friendName;
         friendToRemove.userId = friendId;
-        FriendList.Instance.RemoveFriend(friendToRemove);
+        friendList.RemoveFriend(friendToRemove);
     }
-
-
 
     #endregion
 
-    public Player GetPlayer(string otherId)
-    {
-        Player player = null;
-        for (int i = 0; i < PhotonNetwork.PlayerList.Length; i++)
-        {
-            if (PhotonNetwork.PlayerList[i].UserId.Equals(otherId, System.StringComparison.Ordinal))
-            {
-                player = PhotonNetwork.PlayerList[i];
-                break;
-            }
-        }
-        return player;
-    }
 
-    private void SaveNewFriend()
-    {
-        User newFriend = new User();
-        newFriend.userName = other.NickName;
-        newFriend.userId = other.UserId;
-        FriendList.Instance.AddFriend(newFriend);
-    }
 
 
 }

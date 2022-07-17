@@ -1,21 +1,34 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
+using Photon.Pun;
+using Photon.Realtime;
 
-public class LocalPlayerUIManager : MonoBehaviour
+public class LocalPlayerUIManager : MonoBehaviourPunCallbacks
 {
-    [SerializeField]
-    private Button GoHome_Button;
-    // Start is called before the first frame update
-    void Start()
+
+    public void LeaveRoomAndLoadLoginScene()
     {
-        GoHome_Button.onClick.AddListener(VirtualWorldManager.Instance.LeaveRoomAndLoadHomeScene);
+        PhotonNetwork.LeaveRoom();
     }
 
-    // Update is called once per frame
-    void Update()
-    {
 
+    #region Photon Callback Methods
+
+    public override void OnPlayerEnteredRoom(Player newPlayer)
+    {
+        Debug.Log(newPlayer.NickName + " joined. " + "Player count: " + PhotonNetwork.CurrentRoom.PlayerCount);
     }
+
+    public override void OnLeftRoom()
+    {
+        PhotonNetwork.Disconnect();
+    }
+
+    public override void OnDisconnected(DisconnectCause cause)
+    {
+        PhotonNetwork.LoadLevel("LoginScene");
+    }
+
+    #endregion
 }

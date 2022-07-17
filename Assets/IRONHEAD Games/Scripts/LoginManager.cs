@@ -7,53 +7,72 @@ using Photon.Realtime;
 
 public class LoginManager : MonoBehaviourPunCallbacks
 {
-    public TMP_InputField PlayerName_InputName;
+    [SerializeField]
+    private GameObject connectOptionsPanel;
+    [SerializeField]
+    private GameObject connectWithExistingUserPanel;
 
-    private const string NICKNAME_KEY = "NICKNAME_KEY";
+    [SerializeField]
+    private TMP_InputField playerName_InputName;
+    [SerializeField]
+    private TextMeshProUGUI playerNameText;
 
-
-    #region UI Callback Methods
-
-    public void ConnectAnonymously()
+    private void Start()
     {
-        PhotonNetwork.ConnectUsingSettings();
-    }
-
-    public void ConnectToPhotonServer()
-    {
-        if (PlayerName_InputName != null)
-        {
-            PhotonNetwork.NickName = PlayerName_InputName.text;
-            PhotonNetwork.ConnectUsingSettings();
-        }
-    }
-
-    public void ConnectToGame()
-    {
-        string playerNickname;
-        playerNickname = "User" + Random.Range(0, 10000);
-        string userID = Random.Range(0, 10000).ToString();
         if (UserInfoManager.Instance.GetLocalUserInfo(out UserInfo localuserInfo))
         {
-            playerNickname = localuserInfo.localPlayer.userName;
-            userID = localuserInfo.localPlayer.userId;
+            connectWithExistingUserPanel.SetActive(true);
+            playerNameText.text = localuserInfo.localPlayer.userName;
         }
-        else
+        else connectOptionsPanel.SetActive(true);
+    }
+
+    #region UI Methods
+
+    public void ConnectWithRandomName()
+    {
+        string playerNickname = "User" + Random.Range(0, 10000);
+        string userId = Random.Range(0, 10000).ToString();
+        SaveUserInfo(playerNickname, userId);
+        ConnectToGame(playerNickname, userId);
+    }
+
+    public void ConnectWithName()
+    {
+        if (!string.IsNullOrEmpty(playerName_InputName.text) && !string.IsNullOrWhiteSpace(playerName_InputName.text))
         {
-            UserInfo userInfo = new UserInfo();
-            userInfo.localPlayer = new User();
-            userInfo.localPlayer.userName = playerNickname;
-            userInfo.localPlayer.userId = userID;
-            userInfo.friendList = new List<User>();
-            Debug.Log(userInfo.localPlayer.userName);
-            UserInfoManager.Instance.SaveLocalUserInfo(userInfo);
+            string userId = Random.Range(0, 10000).ToString();
+            SaveUserInfo(playerName_InputName.text, userId);
+            ConnectToGame(playerName_InputName.text, userId);
         }
-        PhotonNetwork.NickName = playerNickname;
+    }
+
+    public void ConnectWithExistingUser()
+    {
+        if (UserInfoManager.Instance.GetLocalUserInfo(out UserInfo localuserInfo))
+        {
+            ConnectToGame(localuserInfo.localPlayer.userName, localuserInfo.localPlayer.userId);
+        }
+    }
+
+    public void ConnectToGame(string userName, string userId)
+    {
+        PhotonNetwork.NickName = userName;
         Debug.Log(PhotonNetwork.NickName);
         AuthenticationValues authenticationValues = new AuthenticationValues();
-        authenticationValues.UserId = userID;
+        authenticationValues.UserId = userId;
         PhotonNetwork.AuthValues = authenticationValues;
         PhotonNetwork.ConnectUsingSettings();
+    }
+
+    private void SaveUserInfo(string userName, string userId)
+    {
+        UserInfo userInfo = new UserInfo();
+        userInfo.localPlayer = new User();
+        userInfo.localPlayer.userName = userName;
+        userInfo.localPlayer.userId = userId;
+        userInfo.friendList = new List<User>();
+        UserInfoManager.Instance.SaveLocalUserInfo(userInfo);
     }
 
     #endregion

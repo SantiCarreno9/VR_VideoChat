@@ -12,8 +12,8 @@ TagManager:
   - 
   - Water
   - UI
-  - LocalAvatarHead
-  - LocalAvatarBody
+  - Ignore
+  - 
   - Teleport
   - Interactable
   - Player
