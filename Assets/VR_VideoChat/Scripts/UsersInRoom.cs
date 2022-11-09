@@ -25,6 +25,9 @@ public class UsersInRoom : UserList
 
     private List<string> sentFriendRequests = new List<string>();
 
+    /// <summary>
+    /// Ir populates the user list with the room player list
+    /// </summary>
     public void FillList()
     {
         if (PhotonNetwork.PlayerListOthers.Length > 0)
@@ -41,6 +44,9 @@ public class UsersInRoom : UserList
         }
     }
 
+    /// <summary>
+    /// Gets the current selected user in the user list and sends him a friend request
+    /// </summary>
     public void SendFriendRequest()
     {
         User targetUser = GetActiveToggleUser();
@@ -57,6 +63,11 @@ public class UsersInRoom : UserList
         usersToggleGroup.SetAllTogglesOff();
     }
 
+    /// <summary>
+    /// As soon as the user selects a player from the user list, depending on whether that user is
+    /// a friend or not, it will show the SendFriendRequest button or the WaitingForResponse image (if
+    /// the user already sent a friend request to him)
+    /// </summary>
     public override void OnToggleSelected()
     {
         User user = GetActiveToggleUser();
@@ -93,6 +104,9 @@ public class UsersInRoom : UserList
         friendRequestText.text = otherName + " wants to be your friend";
     }
 
+    /// <summary>
+    /// Called when the user accepts or declines a friend request
+    /// </summary>
     public void CloseFriendRequestUI()
     {
         friendRequestUI.SetActive(false);
@@ -105,6 +119,11 @@ public class UsersInRoom : UserList
         socialInteractionManager.AcceptFriendRequest();
     }
 
+    /// <summary>
+    /// It deletes the user that sent a friend request from the "sentFriendRequests" list
+    /// after accepting or declining the request
+    /// </summary>
+    /// <param name="userId"></param>
     public void RemoveUserFromSentRequestId(string userId)
     {
         usersToggleGroup.SetAllTogglesOff();

@@ -3,6 +3,9 @@ using Photon.Pun;
 using TMPro;
 using UnityEngine.UI;
 
+/// <summary>
+/// This class is in charge of the interactions with the UI
+/// </summary>
 public class UserList : MonoBehaviourPunCallbacks
 {
     [Header("UserList")]

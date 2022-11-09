@@ -6,9 +6,7 @@ using UnityEngine;
 public class UserInfoManager : MonoBehaviour
 {
     public static UserInfoManager Instance;
-    private string infoPath;
-    //private string infoPath = Directory.GetCurrentDirectory() + @"/GameData" + "/";
-    //private string infoPath = Application.streamingAssetsPath + "/";
+    private string infoPath;    
     private string userInfoPath;
 
     private void Awake()
@@ -21,8 +19,7 @@ public class UserInfoManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
     }
-
-    // Start is called before the first frame update
+    
     void Start()
     {
 #if !UNITY_EDITOR
@@ -37,6 +34,11 @@ public class UserInfoManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Retrieves all the information from the Json file
+    /// </summary>
+    /// <param name="userInfo"></param>
+    /// <returns></returns>
     public bool GetLocalUserInfo(out UserInfo userInfo)
     {
         if (!File.Exists(userInfoPath))
@@ -52,12 +54,20 @@ public class UserInfoManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Saves/Overwrites the json file information
+    /// </summary>
+    /// <param name="newUserInfo"></param>
     public void SaveLocalUserInfo(UserInfo newUserInfo)
     {
         string userInfoJson = JsonUtility.ToJson(newUserInfo);
         File.WriteAllText(userInfoPath, userInfoJson);
     }
 
+    /// <summary>
+    /// Adds a new friend to the json file
+    /// </summary>
+    /// <param name="friend"></param>
     public void AddFriend(User friend)
     {
         if (GetLocalUserInfo(out UserInfo userInfo))
@@ -73,6 +83,10 @@ public class UserInfoManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Removes a given friend and updates the json file
+    /// </summary>
+    /// <param name="friend"></param>
     public void RemoveFriend(User friend)
     {
         if (GetLocalUserInfo(out UserInfo userInfo))
@@ -92,6 +106,11 @@ public class UserInfoManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Checks if the given user is already a friend
+    /// </summary>
+    /// <param name="user"></param>
+    /// <returns></returns>
     public bool CheckIfItIsAlreadyAFriend(User user)
     {
         bool isAlreadyAFriend = false;
@@ -112,36 +131,4 @@ public class UserInfoManager : MonoBehaviour
         return isAlreadyAFriend;
     }
 
-    ///// <summary>
-    ///// Crea el archivo json en caso de no existir y almacena la puntuación actual
-    ///// De lo contrario compara la puntuación almacenada y la actual para almacenar la más alta
-    ///// Finalmente muestra estos valores en la interfaz
-    ///// </summary>
-    //public void ManageJson()
-    //{
-    //    ScoreRecord currentScore = new ScoreRecord();
-    //    currentScore.score = cookiesCount;
-    //    string json = JsonUtility.ToJson(currentScore);
-
-    //    string route = Application.streamingAssetsPath + "/" + "scoreData.json";
-
-    //    if (!File.Exists(route))
-    //    {
-    //        File.WriteAllText(Application.streamingAssetsPath + "/" + "scoreData.json", json);
-    //        prevScoreText.text = "0";
-    //    }
-    //    else
-    //    {
-    //        ScoreRecord prevScore = new ScoreRecord();
-    //        string prevJson = File.ReadAllText(route);
-    //        prevScore = JsonUtility.FromJson<ScoreRecord>(prevJson);
-    //        if (prevScore.score < cookiesCount)
-    //        {
-    //            File.WriteAllText(Application.streamingAssetsPath + "/" + "scoreData.json", json);
-    //        }
-    //        prevScoreText.text = prevScore.score.ToString();
-    //    }
-    //    currentScoreText.text = currentScore.score.ToString();
-
-    //}
 }

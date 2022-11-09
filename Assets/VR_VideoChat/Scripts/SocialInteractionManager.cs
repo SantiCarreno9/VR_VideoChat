@@ -21,6 +21,11 @@ public class SocialInteractionManager : MonoBehaviour
     }
 
     #region Methods
+    /// <summary>
+    /// Gets the Player object from the current room list by searching its userId
+    /// </summary>
+    /// <param name="otherId"></param>
+    /// <returns></returns>
     private Player GetPlayer(string otherId)
     {
         Player[] playerList = PhotonNetwork.PlayerListOthers;
@@ -34,6 +39,9 @@ public class SocialInteractionManager : MonoBehaviour
         return null;
     }
 
+    /// <summary>
+    /// Adds a User as a new friend in the friend list
+    /// </summary>
     private void SaveNewFriend()
     {
         User newFriend = new User();
@@ -42,6 +50,9 @@ public class SocialInteractionManager : MonoBehaviour
         friendList.AddFriend(newFriend);
     }
 
+    /// <summary>
+    /// It shows all the incoming friend requests one by one
+    /// </summary>
     private void ShowNextFriendRequest()
     {
         if (requestersId.Count > 0)
@@ -58,12 +69,20 @@ public class SocialInteractionManager : MonoBehaviour
 
     #region Friend Request
 
+    /// <summary>
+    /// Sends to the selected user the command to show the friend request screen
+    /// </summary>
+    /// <param name="targetPlayer"></param>
     public void SendFriendRequest(Player targetPlayer)
     {
         other = targetPlayer;
         photonView.RPC("ShowFriendRequestRPC", targetPlayer, PhotonNetwork.LocalPlayer.UserId);
     }
 
+    /// <summary>
+    /// Receives the command from the requester to show the friend request screen
+    /// </summary>
+    /// <param name="requesterId"></param>
     [PunRPC]
     private void ShowFriendRequestRPC(string requesterId)
     {
@@ -76,6 +95,9 @@ public class SocialInteractionManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Accepts the friend request and notifies the requester, then it shows the remnant requests
+    /// </summary>
     public void AcceptFriendRequest()
     {
         photonView.RPC("AcceptFriendRequestRPC", other, PhotonNetwork.LocalPlayer.UserId);
@@ -83,6 +105,10 @@ public class SocialInteractionManager : MonoBehaviour
         ShowNextFriendRequest();
     }
 
+    /// <summary>
+    /// Receives the acceptance of the friend request and saves him in the friend list
+    /// </summary>
+    /// <param name="userId"></param>
     [PunRPC]
     private void AcceptFriendRequestRPC(string userId)
     {
@@ -91,12 +117,19 @@ public class SocialInteractionManager : MonoBehaviour
         SaveNewFriend();
     }
 
+    /// <summary>
+    /// Declines the friend request and notifies the requester, then it shows the remnant requests
+    /// </summary>
     public void DeclineFriendRequest()
     {
         photonView.RPC("DeclineFriendRequestRPC", other, PhotonNetwork.LocalPlayer.UserId);
         ShowNextFriendRequest();
     }
 
+    /// <summary>
+    /// Receives the declination of the request and deletes the other user from the list
+    /// </summary>
+    /// <param name="userId"></param>
     [PunRPC]
     private void DeclineFriendRequestRPC(string userId)
     {
@@ -108,6 +141,11 @@ public class SocialInteractionManager : MonoBehaviour
         photonView.RPC("RemoveFriendRPC", friendToRemove, PhotonNetwork.LocalPlayer.UserId, PhotonNetwork.LocalPlayer.NickName);
     }
 
+    /// <summary>
+    /// Receives the command to delete a friend from the friend list
+    /// </summary>
+    /// <param name="friendId"></param>
+    /// <param name="friendName"></param>
     [PunRPC]
     private void RemoveFriendRPC(string friendId, string friendName)
     {
